@@ -28,7 +28,7 @@ func init() {
 	}
 }
 
-func handleRequest(ctx context.Context, event json.RawMessage) json.RawMessage {
+func handleRequest(ctx context.Context, _ json.RawMessage) json.RawMessage {
 	resp, err := http.Get(targetUrl)
 	if err != nil {
 		err = fmt.Errorf("http GET error: %v", err)
