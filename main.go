@@ -4,19 +4,32 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
+	"log"
 	"net/http"
+	"net/url"
+	"os"
+	"strings"
 
 	"github.com/aws/aws-lambda-go/lambda"
 )
 
-func handleRequest(ctx context.Context, event json.RawMessage) json.RawMessage {
-	msg, err := EventMsgFromBytes(event)
-	if err != nil {
-		return NewErrResp(err).ToBytes()
+var (
+	hostnames []string = strings.Split(os.Getenv(EnvHostnames), "\n")
+	targetUrl string   = os.Getenv(EnvTargetUrl)
+)
+
+func init() {
+	if len(hostnames) == 0 {
+		log.Fatal(fmt.Errorf("at least one hostname is required"))
 	}
 
-	resp, err := http.Get(msg.Url)
+	if _, err := url.Parse(targetUrl); err != nil {
+		log.Fatal(fmt.Errorf("invalid target url: %s", targetUrl))
+	}
+}
+
+func handleRequest(ctx context.Context, event json.RawMessage) json.RawMessage {
+	resp, err := http.Get(targetUrl)
 	if err != nil {
 		err = fmt.Errorf("http GET error: %v", err)
 		return NewErrResp(err).ToBytes()
@@ -28,13 +41,12 @@ func handleRequest(ctx context.Context, event json.RawMessage) json.RawMessage {
 		return NewErrResp(err).ToBytes()
 	}
 
-	body, err := io.ReadAll(resp.Body)
+	data, err := NewDataFromReader(resp.Body)
 	if err != nil {
-		err = fmt.Errorf("error reading response body: %v", err)
 		return NewErrResp(err).ToBytes()
 	}
 
-	return NewLambdaResp(body, nil).ToBytes()
+	return NewLambdaResp(data, nil).ToBytes()
 }
 
 func main() {
