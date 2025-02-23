@@ -39,7 +39,7 @@ func handleRequest(ctx context.Context, _ json.RawMessage) (pkg.LambdaResp, erro
 		return pkg.LambdaResp{}, err
 	}
 
-	authToken := os.Getenv(pkg.EnvAuthToken)
+	authToken := os.Getenv(pkg.EnvLambdaAuthToken)
 	if authToken != "" {
 		req.Header.Add(pkg.HttpHeaderAuthorization, pkg.BearerHeader(authToken))
 	}

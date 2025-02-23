@@ -8,7 +8,7 @@ import (
 )
 
 func Handle(w http.ResponseWriter, r *http.Request) {
-	authToken := os.Getenv(pkg.EnvAuthToken)
+	authToken := os.Getenv(pkg.EnvLambdaAuthToken)
 	if authToken != "" {
 		header := r.Header.Get(pkg.HttpHeaderAuthorization)
 		if pkg.BearerHeader(authToken) != header {
