@@ -1,4 +1,4 @@
-package main
+package pkg
 
 type LambdaResp struct {
 	TargetHostname string `json:"targetHostname"`

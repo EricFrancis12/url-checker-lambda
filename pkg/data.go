@@ -1,4 +1,4 @@
-package main
+package pkg
 
 import (
 	"encoding/json"
@@ -10,7 +10,13 @@ type Data struct {
 	Hostname string `json:"hostname"`
 }
 
-func NewDataFromReader(r io.Reader) (Data, error) {
+func NewData(hostname string) Data {
+	return Data{
+		Hostname: hostname,
+	}
+}
+
+func NewDataFromReader(r io.Reader, hostnames []string) (Data, error) {
 	var data Data
 	if err := json.NewDecoder(r).Decode(&data); err != nil {
 		return Data{}, fmt.Errorf("error reading response body: %v", err)
@@ -27,7 +33,7 @@ func NewDataFromReader(r io.Reader) (Data, error) {
 	return data, nil
 }
 
-func (d Data) Compliment() (Data, error) {
+func (d Data) Compliment(hostnames []string) (Data, error) {
 	var filteredHostnames = filter(hostnames, func(hn string) bool {
 		return hn != d.Hostname
 	})
@@ -36,11 +42,13 @@ func (d Data) Compliment() (Data, error) {
 		return Data{}, fmt.Errorf("no hostname compliments available")
 	}
 
-	return Data{
-		Hostname: mustGetRand(filteredHostnames),
-	}, nil
+	return NewData(mustGetRand(filteredHostnames)), nil
 }
 
 func (d Data) Resp() LambdaResp {
 	return NewLambdaResp(d.Hostname)
+}
+
+func (d Data) Json() []byte {
+	return []byte(fmt.Sprintf(`{"hostname":"%s"}`, d.Hostname))
 }
