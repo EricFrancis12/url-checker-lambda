@@ -1,0 +1,9 @@
+# bin
+bootstrap
+url-checker-lambda
+bin
+*.exe
+*.msi
+
+# zip
+*.zip

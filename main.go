@@ -14,13 +14,13 @@ import (
 )
 
 var (
-	hostnames []string = strings.Split(os.Getenv(EnvHostnames), "\n")
+	hostnames []string = dedupe(strings.Split(os.Getenv(EnvHostnames), "\\n"))
 	targetUrl string   = os.Getenv(EnvTargetUrl)
 )
 
 func init() {
-	if len(hostnames) == 0 {
-		log.Fatal(fmt.Errorf("at least one hostname is required"))
+	if len(hostnames) < 2 {
+		log.Fatal(fmt.Errorf("at least two hostnames are required"))
 	}
 
 	if _, err := url.Parse(targetUrl); err != nil {
@@ -28,25 +28,30 @@ func init() {
 	}
 }
 
-func handleRequest(ctx context.Context, _ json.RawMessage) json.RawMessage {
+func handleRequest(ctx context.Context, _ json.RawMessage) (LambdaResp, error) {
 	resp, err := http.Get(targetUrl)
 	if err != nil {
 		err = fmt.Errorf("http GET error: %v", err)
-		return NewErrResp(err).ToBytes()
+		return LambdaResp{}, err
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != 200 {
+	if resp.StatusCode != http.StatusOK {
 		err = fmt.Errorf("received non 200 status code (%d)", resp.StatusCode)
-		return NewErrResp(err).ToBytes()
+		return LambdaResp{}, err
 	}
 
 	data, err := NewDataFromReader(resp.Body)
 	if err != nil {
-		return NewErrResp(err).ToBytes()
+		return LambdaResp{}, err
 	}
 
-	return NewLambdaResp(data, nil).ToBytes()
+	cdata, err := data.Compliment()
+	if err != nil {
+		return LambdaResp{}, err
+	}
+
+	return cdata.Resp(), nil
 }
 
 func main() {

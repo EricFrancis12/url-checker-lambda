@@ -20,9 +20,27 @@ func NewDataFromReader(r io.Reader) (Data, error) {
 		return Data{}, fmt.Errorf("hostname is missing")
 	}
 
-	if !sliceIncludes(hostnames, data.Hostname) {
+	if !includes(hostnames, data.Hostname) {
 		return Data{}, fmt.Errorf("unknown hostname: %s", data.Hostname)
 	}
 
 	return data, nil
+}
+
+func (d Data) Compliment() (Data, error) {
+	var filteredHostnames = filter(hostnames, func(hn string) bool {
+		return hn != d.Hostname
+	})
+
+	if len(filteredHostnames) == 0 {
+		return Data{}, fmt.Errorf("no hostname compliments available")
+	}
+
+	return Data{
+		Hostname: mustGetRand(filteredHostnames),
+	}, nil
+}
+
+func (d Data) Resp() LambdaResp {
+	return NewLambdaResp(d.Hostname)
 }
